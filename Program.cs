@@ -85,7 +85,6 @@ namespace FancadeImageGenerator
                     using (SaveReader reader = new SaveReader(GamePath))
                         Game = Game.Load(reader);
 
-                    Game.FixBlockIdOffset();
                     Game.FixIds();
                     Console.WriteLine("Done");
                 }
@@ -105,37 +104,35 @@ namespace FancadeImageGenerator
                 });
                 Console.WriteLine("Done");
 
-                int b = Game.GetLevelsPlusCustomBlocks();
-
-                Level l = AddLevel("Image");
+                Level level = AddLevel("Image");
 
                 Game.FixIds();
                 addColBlocks(out Dictionary<byte, ushort> colToId);
 
                 Console.WriteLine("Drawing...");
                 // resize the level only once
-                l.BlockIds.SetSegment(width - 1, 0, height - 1, 1);
+                level.BlockIds.SetSegment(width - 1, 0, height - 1, 1);
 
+                // draw image
                 for (int y = 0; y < height; y++)
                     for (int x = 0; x < width; x++)
                     {
                         Argb32 col = img[x, y];
                         ushort block = colToId[(byte)U.ClosestColor(Colors, col)];
-                        l.BlockIds.SetSegment(x, 0, y, (ushort)(block));
+                        level.BlockIds.SetSegment(x, 0, y, (ushort)(block));
                     }
 
+                // add color blocks
                 int j = 0;
                 foreach (var item in colToId)
                 {
-                    l.BlockIds.SetSegment(j * 2, 0, height + 2, item.Value);
+                    level.BlockIds.SetSegment(j * 2, 0, height + 2, item.Value);
                     j++;
                 }
 
                 Console.WriteLine("Done");
 
                 Game.FixIds();
-
-                int n = Game.GetLevelsPlusCustomBlocks();
 
                 Console.WriteLine("Saving game...");
 
@@ -196,15 +193,15 @@ namespace FancadeImageGenerator
                 colToId.Add((byte)(col - 1), block.MainId);
 
                 List<Vector3I> toRemove = new List<Vector3I>();
-                foreach (var item in block.Blocks)
+                foreach (var item in block.Sections)
                     if (item.Key != Vector3I.Zero)
                         toRemove.Add(item.Key);
 
                 foreach (var pos in toRemove)
-                    block.Blocks.Remove(pos);
+                    block.Sections.Remove(pos);
 
                 BlockSection section;
-                if (!block.Blocks.TryGetValue(Vector3I.Zero, out section))
+                if (!block.Sections.TryGetValue(Vector3I.Zero, out section))
                     section = new BlockSection(new SubBlock[8 * 8 * 8], BlockAttribs.Default, block.MainId);
 
                 for (int j = 0; j < section.Blocks.Length; j++)
