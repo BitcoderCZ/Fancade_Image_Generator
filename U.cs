@@ -26,14 +26,30 @@ namespace FancadeImageGenerator
             Console.ReadKey(true);
         }
 
-        public static int ClosestColor(Argb32[] colors, Argb32 color)
+        public static bool TakeBool(string message, bool defaultOption)
+        {
+            Console.Write($"{message} ({(defaultOption ? 'Y' : 'y')}/{(defaultOption ? 'n' : 'N')}): ");
+
+            string? typed = Console.ReadLine();
+
+            if (defaultOption)
+                return !(typed == "n" || typed == "N");
+            else
+                return (typed == "y" || typed == "Y");
+        }
+
+        public static int ClosestColor(Rgba32[] colors, Rgba32 color)
         {
             int minDiff = int.MaxValue;
             int index = -1;
 
-            for (int i = 0; i < colors.Length; i++)
+            if (color.A < 127)
+                return 0;
+
+            for (int i = 1; i < colors.Length; i++)
             {
                 int diff = ColorDiff(color, colors[i]);
+
                 if (diff < minDiff)
                 {
                     minDiff = diff;
@@ -44,24 +60,9 @@ namespace FancadeImageGenerator
             return index;
         }
 
-        public static int ColorDiff(Argb32 c1, Argb32 c2)
+        public static int ColorDiff(Rgba32 c1, Rgba32 c2)
             => (int)Math.Sqrt((c1.R - c2.R) * (c1.R - c2.R)
                                  + (c1.G - c2.G) * (c1.G - c2.G)
                                  + (c1.B - c2.B) * (c1.B - c2.B));
-
-        public static string RandomGameId()
-        {
-            Random rng = new Random(DateTime.UtcNow.Second * DateTime.UtcNow.Millisecond);
-
-            char[] allowedChars = new char[] { 'A', 'B', 'C', 'D', 'E', 'F', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-
-            const int length = 16;
-
-            char[] id = new char[length];
-            for (int i = 0; i < length; i++)
-                id[i] = allowedChars[rng.Next(0, allowedChars.Length)];
-
-            return new string(id);
-        }
     }
 }
